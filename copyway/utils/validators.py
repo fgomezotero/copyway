@@ -25,14 +25,14 @@ def validate_source(source, protocol="local"):
 def validate_destination(destination, protocol="local"):
     if protocol == "local":
         dest = Path(destination)
-        
+
         # Si destination es un directorio existente, está OK (se copiará dentro)
         if dest.exists() and dest.is_dir():
             # Validar permisos de escritura en el directorio
             if not os.access(dest, os.W_OK):
                 raise ValidationError(f"Sin permisos de escritura en: {dest}")
             return True
-        
+
         # Si destination no existe, validar que el directorio padre existe y tiene permisos
         if not dest.exists():
             parent = dest.parent
@@ -41,7 +41,7 @@ def validate_destination(destination, protocol="local"):
             if not os.access(parent, os.W_OK):
                 raise ValidationError(f"Sin permisos de escritura en: {parent}")
             return True
-        
+
         # Si destination existe como archivo, error
         if dest.is_file():
             raise ValidationError(f"Destination ya existe como archivo: {destination}")
@@ -51,12 +51,23 @@ def validate_destination(destination, protocol="local"):
             host_part = destination.split(":")[0]
             try:
                 result = subprocess.run(
-                    ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes", host_part, "echo", "ok"],
+                    [
+                        "ssh",
+                        "-o",
+                        "ConnectTimeout=5",
+                        "-o",
+                        "BatchMode=yes",
+                        host_part,
+                        "echo",
+                        "ok",
+                    ],
                     capture_output=True,
-                    timeout=10
+                    timeout=10,
                 )
                 if result.returncode != 0:
-                    raise ValidationError(f"No se puede conectar a {host_part}. Verificar SSH.")
+                    raise ValidationError(
+                        f"No se puede conectar a {host_part}. Verificar SSH."
+                    )
             except subprocess.TimeoutExpired:
                 raise ValidationError(f"Timeout conectando a {host_part}")
             except FileNotFoundError:
@@ -64,11 +75,15 @@ def validate_destination(destination, protocol="local"):
     elif protocol == "hdfs":
         # Validar que hdfs está disponible (pero permitir en pruebas sin Hadoop)
         try:
-            subprocess.run(["hdfs", "version"], capture_output=True, check=True, timeout=5)
+            subprocess.run(
+                ["hdfs", "version"], capture_output=True, check=True, timeout=5
+            )
         except FileNotFoundError:
             # En ambiente de pruebas o sin Hadoop instalado, solo logear warning
             # En producción, el usuario sabrá si necesita HDFS
-            logger.debug("Comando 'hdfs' no encontrado. Hadoop puede no estar instalado.")
+            logger.debug(
+                "Comando 'hdfs' no encontrado. Hadoop puede no estar instalado."
+            )
         except subprocess.CalledProcessError:
             logger.debug("Error ejecutando 'hdfs'. Verificar configuración.")
         except subprocess.TimeoutExpired:
@@ -83,10 +98,10 @@ def validate_disk_space(source, destination, protocol="local"):
             size = src.stat().st_size
         else:
             size = sum(f.stat().st_size for f in src.rglob("*") if f.is_file())
-        
+
         dest_stat = os.statvfs(Path(destination).parent)
         available = dest_stat.f_bavail * dest_stat.f_frsize
-        
+
         if size > available:
             raise ValidationError(
                 f"Espacio insuficiente. Requerido: {_format_size(size)}, "
@@ -97,7 +112,7 @@ def validate_disk_space(source, destination, protocol="local"):
 
 def _format_size(bytes_size):
     """Formatear tamaño en bytes a formato legible"""
-    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+    for unit in ["B", "KB", "MB", "GB", "TB"]:
         if bytes_size < 1024.0:
             return f"{bytes_size:.2f} {unit}"
         bytes_size /= 1024.0
