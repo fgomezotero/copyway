@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "copyway"
+version = "0.1.0"
+description = "CLI para copiar archivos/directorios usando diferentes protocolos"
+authors = ["Franklin"]
+readme = "README.md"
+packages = [{include = "copyway"}]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+click = "^8.0.0"
+pyyaml = "^6.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0.0"
+pytest-cov = "^4.0.0"
+
+[tool.poetry.scripts]
+copyway = "copyway.cli:main"
+
+[tool.poetry.plugins."copyway.protocols"]
+local = "copyway.protocols.local:LocalProtocol"
+ssh = "copyway.protocols.ssh:SSHProtocol"
+hdfs = "copyway.protocols.hdfs:HDFSProtocol"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,14 @@
+# Ejemplo de configuración para CopyWay
+# Copiar a ~/.copyway.yml o especificar con --config
+
+protocols:
+  ssh:
+    port: 22
+    user: admin
+    key_file: ~/.ssh/id_rsa
+    compress: true
+  
+  hdfs:
+    replication: 3
+    overwrite: false
+    permission: "755"
