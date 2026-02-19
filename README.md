@@ -55,14 +55,16 @@ copyway -p ssh usuario@servidor:/origen/archivo.txt usuario@servidor:/destino/
 ### Protocolo SFTP
 ```bash
 # Local → Remoto (con progress bar en tiempo real)
-copyway -p sftp archivo.txt usuario@servidor:/ruta/destino/
+copyway -p sftp --user miusuario --password mipassword archivo.txt servidor:/ruta/destino/
+
+# Con key file (más seguro)
+copyway -p sftp --user miusuario --key-file ~/.ssh/id_rsa archivo.txt servidor:/ruta/
 
 # Remoto → Local
-copyway -p sftp usuario@servidor:/ruta/archivo.txt /local/destino/
+copyway -p sftp --user admin --password secret servidor:/ruta/archivo.txt /local/destino/
 
-# Con autenticación
-copyway -p sftp --key-file ~/.ssh/id_rsa archivo.txt usuario@servidor:/ruta/
-copyway -p sftp --password mipassword archivo.txt usuario@servidor:/ruta/
+# Con puerto personalizado
+copyway -p sftp --port 2222 --user admin --key-file ~/.ssh/id_rsa archivo.txt servidor:/ruta/
 ```
 
 ### Protocolo HDFS
@@ -86,11 +88,17 @@ copyway -p ssh --port 2222 --user admin --key-file ~/.ssh/id_rsa --compress arch
 
 ### SFTP
 ```bash
-# Con progress bar en tiempo real
-copyway -p sftp --port 2222 --user admin --key-file ~/.ssh/id_rsa archivo.txt servidor:/ruta/
-
 # Con password
-copyway -p sftp --password mipassword archivo.txt usuario@servidor:/ruta/
+copyway -p sftp --user admin --password secret archivo.txt servidor:/ruta/
+
+# Con key file (recomendado)
+copyway -p sftp --user admin --key-file ~/.ssh/id_rsa archivo.txt servidor:/ruta/
+
+# Con puerto personalizado
+copyway -p sftp --port 2222 --user admin --password secret archivo.txt servidor:/ruta/
+
+# Sin progress bar
+copyway -p sftp --user admin --password secret --no-progress archivo.txt servidor:/ruta/
 ```
 
 ### HDFS
@@ -139,10 +147,17 @@ protocols:
   sftp:
     port: 22
     user: admin
-    key_file: ~/.ssh/id_rsa
+    password: secret  # O usar key_file en su lugar
+    # key_file: ~/.ssh/id_rsa
   hdfs:
     replication: 3
     overwrite: false
+```
+
+**Nota de seguridad**: Para SFTP, es más seguro usar `key_file` en lugar de `password`. Si usas password, asegura permisos restrictivos:
+
+```bash
+chmod 600 ~/.copyway.yml
 ```
 
 ## 🔌 Extensibilidad
