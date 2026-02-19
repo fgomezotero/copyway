@@ -27,7 +27,7 @@ def format_speed(bytes_per_sec):
 
 
 class ProgressCallback:
-    """Callback estilo pip/uv con spinner y últimos archivos copiados"""
+    """Callback estilo pip - muestra cada archivo en nueva línea"""
     
     SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
     
@@ -38,23 +38,21 @@ class ProgressCallback:
         self.start_time = time.time()
         self.last_update = 0
         self.spinner_idx = 0
-        self.recent_files = deque(maxlen=7)
-        self.lines_printed = 0
-    
-    def add_file(self, filename):
-        """Agregar archivo a la lista de recientes"""
-        self.recent_files.append(filename)
+        self.last_file = None
     
     def update(self, bytes_copied, filename=None):
         """Actualizar progreso"""
         self.copied += bytes_copied
         current_time = time.time()
         
-        if filename:
-            self.add_file(filename)
+        # Mostrar nuevo archivo copiado
+        if filename and filename != self.last_file:
+            self.last_file = filename
+            sys.stdout.write(f"  → {filename}\n")
+            sys.stdout.flush()
         
-        # Actualizar cada 0.05 segundos
-        if current_time - self.last_update < 0.05 and self.copied < self.total_size:
+        # Actualizar línea de progreso cada 0.1 segundos
+        if current_time - self.last_update < 0.1 and self.copied < self.total_size:
             return
         
         self.last_update = current_time
@@ -65,32 +63,16 @@ class ProgressCallback:
             speed = self.copied / elapsed
             percent = (self.copied / self.total_size * 100) if self.total_size > 0 else 0
             
-            # Limpiar líneas anteriores
-            self._clear_lines()
-            
-            # Línea de progreso
             spinner = self.SPINNER[self.spinner_idx]
-            progress_line = f"{spinner} {self.label} {format_size(self.copied)}/{format_size(self.total_size)} ({percent:.0f}%) {format_speed(speed)}"
-            sys.stdout.write(progress_line + "\n")
+            msg = f"\r{spinner} {self.label} {format_size(self.copied)}/{format_size(self.total_size)} ({percent:.0f}%) {format_speed(speed)}"
             
-            # Mostrar últimos archivos
-            for file in self.recent_files:
-                sys.stdout.write(f"  → {file}\n")
-            
-            self.lines_printed = 1 + len(self.recent_files)
+            sys.stdout.write(msg)
             sys.stdout.flush()
-    
-    def _clear_lines(self):
-        """Limpiar líneas anteriores"""
-        if self.lines_printed > 0:
-            for _ in range(self.lines_printed):
-                sys.stdout.write("\033[F\033[K")  # Mover arriba y limpiar línea
     
     def finish(self):
         """Finalizar progreso"""
-        self._clear_lines()
         elapsed = time.time() - self.start_time
         avg_speed = self.copied / elapsed if elapsed > 0 else 0
-        msg = f"✓ {self.label} {format_size(self.copied)} en {elapsed:.1f}s ({format_speed(avg_speed)})\n"
+        msg = f"\r✓ {self.label} {format_size(self.copied)} en {elapsed:.1f}s ({format_speed(avg_speed)})\n"
         sys.stdout.write(msg)
         sys.stdout.flush()

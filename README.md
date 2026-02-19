@@ -147,6 +147,21 @@ cd copyway
 poetry install --with dev
 ```
 
+### Usando Conda
+
+```bash
+# Crear entorno conda
+conda create -n copyway python=3.10 -y
+conda activate copyway
+
+# Instalar dependencias
+pip install -e ".[dev]"
+
+# O con Poetry
+pip install poetry
+poetry install --with dev
+```
+
 ### Ejecutar tests
 
 ```bash
@@ -154,6 +169,11 @@ poetry install --with dev
 poetry install --with dev
 poetry run pytest
 poetry run pytest --cov=copyway
+
+# Con Conda
+conda activate copyway
+pytest
+pytest --cov=copyway
 
 # O con pip
 pip install -e ".[dev]"
