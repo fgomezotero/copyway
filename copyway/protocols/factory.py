@@ -10,29 +10,29 @@ from ..utils.logger import logger
 
 class ProtocolFactory:
     """Factory para crear y gestionar protocolos de transferencia.
-    
+
     Implementa el patrón Factory para registrar y crear instancias de
     protocolos. Soporta protocolos built-in y personalizados.
-    
+
     Attributes:
         _protocols (dict): Registro de protocolos disponibles
-    
+
     Example:
         >>> from copyway.protocols import ProtocolFactory
         >>> protocol = ProtocolFactory.create('local', {'preserve_metadata': True})
         >>> protocol.copy('/origen', '/destino')
     """
-    
+
     _protocols = {}
 
     @classmethod
     def register(cls, name, protocol_class):
         """Registra un nuevo protocolo.
-        
+
         Args:
             name (str): Nombre del protocolo (ej: 'local', 'ssh', 'sftp')
             protocol_class (type): Clase del protocolo que hereda de Protocol
-        
+
         Example:
             >>> class S3Protocol(Protocol):
             ...     pass
@@ -44,17 +44,17 @@ class ProtocolFactory:
     @classmethod
     def create(cls, name, config=None):
         """Crea una instancia de protocolo.
-        
+
         Args:
             name (str): Nombre del protocolo registrado
             config (dict, optional): Configuración del protocolo
-        
+
         Returns:
             Protocol: Instancia del protocolo solicitado
-        
+
         Raises:
             ProtocolError: Si el protocolo no está registrado
-        
+
         Example:
             >>> protocol = ProtocolFactory.create('sftp', {'port': 22})
         """
@@ -65,10 +65,10 @@ class ProtocolFactory:
     @classmethod
     def list_protocols(cls):
         """Lista todos los protocolos registrados.
-        
+
         Returns:
             list: Lista de nombres de protocolos disponibles
-        
+
         Example:
             >>> protocols = ProtocolFactory.list_protocols()
             >>> print(protocols)

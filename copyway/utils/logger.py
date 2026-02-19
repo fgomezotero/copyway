@@ -10,17 +10,17 @@ import sys
 
 def setup_logger(name="copyway", level=logging.INFO):
     """Configura y retorna un logger para la aplicación.
-    
+
     Crea un logger con handler de consola y formato estandarizado.
     Previene la creación de múltiples handlers verificando si ya existen.
-    
+
     Args:
         name (str): Nombre del logger. Default: "copyway"
         level (int): Nivel de logging. Default: logging.INFO
-    
+
     Returns:
         logging.Logger: Logger configurado
-    
+
     Example:
         >>> logger = setup_logger(level=logging.DEBUG)
         >>> logger.info("Mensaje de información")
@@ -28,12 +28,14 @@ def setup_logger(name="copyway", level=logging.INFO):
     """
     logger = logging.getLogger(name)
     logger.setLevel(level)
-    
+
     if not logger.handlers:
         handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        )
         logger.addHandler(handler)
-    
+
     return logger
 
 

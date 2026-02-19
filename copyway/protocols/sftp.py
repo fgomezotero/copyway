@@ -1,4 +1,9 @@
-import os
+"""Protocolo SFTP para transferencias seguras de archivos.
+
+Implementa transferencias bidireccionales usando paramiko con soporte para
+autenticación por password o key file, y progress bar en tiempo real.
+"""
+
 from pathlib import Path
 from .base import Protocol
 from ..exceptions import ProtocolError
@@ -16,49 +21,56 @@ class SFTPProtocol(Protocol):
     def validate(self, source, destination, **options):
         if paramiko is None:
             raise ProtocolError("paramiko no instalado. Ejecutar: pip install paramiko")
-        
+
         from ..utils.validators import validate_source, validate_destination_sftp
+
         validate_source(source, "sftp")
-        
+
         # Pasar credenciales y usuario para validación SFTP
         password = options.get("password", self.config.get("password"))
         key_file = options.get("key_file", self.config.get("key_file"))
         port = options.get("port", self.config.get("port", 22))
         user = options.get("user", self.config.get("user"))
-        
+
         validate_destination_sftp(destination, password, key_file, port, user)
         return True
 
     def copy(self, source, destination, **options):
         if paramiko is None:
             raise ProtocolError("paramiko no instalado. Ejecutar: pip install paramiko")
-        
+
         try:
             port = options.get("port", self.config.get("port", 22))
             user = options.get("user", self.config.get("user"))
             password = options.get("password", self.config.get("password"))
             key_file = options.get("key_file", self.config.get("key_file"))
             show_progress = options.get("progress", True)
-            
+
             is_upload = Path(source).exists()
-            
+
             if is_upload:
-                self._upload(source, destination, port, user, password, key_file, show_progress)
+                self._upload(
+                    source, destination, port, user, password, key_file, show_progress
+                )
             else:
-                self._download(source, destination, port, user, password, key_file, show_progress)
-                
+                self._download(
+                    source, destination, port, user, password, key_file, show_progress
+                )
+
         except Exception as e:
             logger.error(f"Error en copia SFTP: {e}")
             raise ProtocolError(f"Error en copia SFTP: {e}")
 
-    def _upload(self, source, destination, port, user, password, key_file, show_progress):
+    def _upload(
+        self, source, destination, port, user, password, key_file, show_progress
+    ):
         host, remote_path, remote_user = self._parse_remote(destination, user)
         ssh = self._connect(host, port, remote_user, password, key_file)
-        
+
         try:
             sftp = ssh.open_sftp()
             src_path = Path(source)
-            
+
             # Verificar si remote_path es un directorio o archivo destino
             try:
                 stat = sftp.stat(remote_path)
@@ -72,64 +84,84 @@ class SFTPProtocol(Protocol):
                     sftp.stat(parent_dir)
                 except IOError:
                     raise ProtocolError(f"Directorio remoto no existe: {parent_dir}")
-            
+
             if src_path.is_file():
                 total_size = src_path.stat().st_size
                 start_time = time.time()
-                
+
                 def callback(bytes_transferred, total_bytes):
                     if show_progress:
                         elapsed = time.time() - start_time
                         percent = (bytes_transferred / total_bytes) * 100
                         speed = bytes_transferred / elapsed if elapsed > 0 else 0
-                        print(f"\r[{'=' * int(percent/2)}{' ' * (50-int(percent/2))}] {percent:.1f}% - {format_size(bytes_transferred)}/{format_size(total_bytes)} - {format_speed(speed)}", end='', flush=True)
-                
-                sftp.put(str(src_path), remote_path, callback=callback if show_progress else None)
-                
+                        print(
+                            f"\r[{'=' * int(percent/2)}{' ' * (50-int(percent/2))}] {percent:.1f}% - {format_size(bytes_transferred)}/{format_size(total_bytes)} - {format_speed(speed)}",
+                            end="",
+                            flush=True,
+                        )
+
+                sftp.put(
+                    str(src_path),
+                    remote_path,
+                    callback=callback if show_progress else None,
+                )
+
                 if show_progress:
                     print()
                     elapsed = time.time() - start_time
                     print(f"✓ Completado: {format_size(total_size)} en {elapsed:.1f}s")
             else:
                 self._upload_dir(sftp, src_path, remote_path, show_progress)
-            
+
             sftp.close()
             logger.info("Copia SFTP completada exitosamente")
         except IOError as e:
             logger.error(f"Error SFTP: {e}")
-            raise ProtocolError(f"Error SFTP: {e}. Verifica que el directorio remoto existe y tienes permisos")
+            raise ProtocolError(
+                f"Error SFTP: {e}. Verifica que el directorio remoto existe y tienes permisos"
+            )
         finally:
             ssh.close()
 
-    def _download(self, source, destination, port, user, password, key_file, show_progress):
+    def _download(
+        self, source, destination, port, user, password, key_file, show_progress
+    ):
         host, remote_path, remote_user = self._parse_remote(source, user)
         ssh = self._connect(host, port, remote_user, password, key_file)
-        
+
         try:
             sftp = ssh.open_sftp()
             dest_path = Path(destination)
-            
+
             try:
                 stat = sftp.stat(remote_path)
                 total_size = stat.st_size
                 start_time = time.time()
-                
+
                 def callback(bytes_transferred, total_bytes):
                     if show_progress:
                         elapsed = time.time() - start_time
                         percent = (bytes_transferred / total_bytes) * 100
                         speed = bytes_transferred / elapsed if elapsed > 0 else 0
-                        print(f"\r[{'=' * int(percent/2)}{' ' * (50-int(percent/2))}] {percent:.1f}% - {format_size(bytes_transferred)}/{format_size(total_bytes)} - {format_speed(speed)}", end='', flush=True)
-                
-                sftp.get(remote_path, str(dest_path), callback=callback if show_progress else None)
-                
+                        print(
+                            f"\r[{'=' * int(percent/2)}{' ' * (50-int(percent/2))}] {percent:.1f}% - {format_size(bytes_transferred)}/{format_size(total_bytes)} - {format_speed(speed)}",
+                            end="",
+                            flush=True,
+                        )
+
+                sftp.get(
+                    remote_path,
+                    str(dest_path),
+                    callback=callback if show_progress else None,
+                )
+
                 if show_progress:
                     print()
                     elapsed = time.time() - start_time
                     print(f"✓ Completado: {format_size(total_size)} en {elapsed:.1f}s")
             except IOError:
                 self._download_dir(sftp, remote_path, dest_path, show_progress)
-            
+
             sftp.close()
             logger.info("Copia SFTP completada exitosamente")
         finally:
@@ -140,9 +172,9 @@ class SFTPProtocol(Protocol):
             sftp.mkdir(remote_dir)
         except IOError:
             pass
-        
+
         for item in local_dir.iterdir():
-            remote_item = f"{remote_dir}/{item.name}"
+            remote_item = "{}/{}".format(remote_dir, item.name)
             if item.is_file():
                 if show_progress:
                     print(f"Copiando {item.name}...")
@@ -152,11 +184,11 @@ class SFTPProtocol(Protocol):
 
     def _download_dir(self, sftp, remote_dir, local_dir, show_progress):
         local_dir.mkdir(parents=True, exist_ok=True)
-        
+
         for item in sftp.listdir_attr(remote_dir):
             remote_item = f"{remote_dir}/{item.filename}"
             local_item = local_dir / item.filename
-            
+
             if self._is_dir(item):
                 self._download_dir(sftp, remote_item, local_item, show_progress)
             else:
@@ -167,14 +199,14 @@ class SFTPProtocol(Protocol):
     def _connect(self, host, port, user, password, key_file):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        
+
         if key_file:
             ssh.connect(host, port=port, username=user, key_filename=key_file)
         elif password:
             ssh.connect(host, port=port, username=user, password=password)
         else:
             ssh.connect(host, port=port, username=user)
-        
+
         return ssh
 
     def _parse_remote(self, path, default_user=None):
@@ -187,14 +219,20 @@ class SFTPProtocol(Protocol):
             # Formato host:/ruta, usar --user
             host, remote_path = path.split(":", 1)
             if not default_user:
-                raise ProtocolError(f"Debe especificar --user o usar formato usuario@host:/ruta")
+                raise ProtocolError(
+                    f"Debe especificar --user o usar formato usuario@host:/ruta"
+                )
             return host, remote_path, default_user
-        raise ProtocolError(f"Formato inválido: {path}. Usar host:/ruta con --user o usuario@host:/ruta")
+        raise ProtocolError(
+            f"Formato inválido: {path}. Usar host:/ruta con --user o usuario@host:/ruta"
+        )
 
     def _is_dir(self, attr):
         import stat
+
         return stat.S_ISDIR(attr.st_mode)
-    
+
     def _is_dir_stat(self, stat_result):
         import stat
+
         return stat.S_ISDIR(stat_result.st_mode)
