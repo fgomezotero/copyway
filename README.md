@@ -5,11 +5,12 @@
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-CLI para copiar archivos y directorios usando diferentes protocolos (local, SSH, HDFS).
+CLI para copiar archivos y directorios usando diferentes protocolos (local, SSH, SFTP, HDFS).
 
 ## 🚀 Características
 
-- ✅ **Múltiples protocolos**: Local, SSH, HDFS
+- ✅ **Múltiples protocolos**: Local, SSH, SFTP, HDFS
+- ✅ **Progress bar en tiempo real**: Tracking completo con SFTP (porcentaje, velocidad, bytes)
 - ✅ **Validación completa**: Permisos, espacio en disco, conectividad
 - ✅ **Dry-run mode**: Simula operaciones sin ejecutar
 - ✅ **Configuración flexible**: Archivo YAML
@@ -51,6 +52,19 @@ copyway -p ssh usuario@servidor:/ruta/archivo.txt /local/destino/
 copyway -p ssh usuario@servidor:/origen/archivo.txt usuario@servidor:/destino/
 ```
 
+### Protocolo SFTP
+```bash
+# Local → Remoto (con progress bar en tiempo real)
+copyway -p sftp archivo.txt usuario@servidor:/ruta/destino/
+
+# Remoto → Local
+copyway -p sftp usuario@servidor:/ruta/archivo.txt /local/destino/
+
+# Con autenticación
+copyway -p sftp --key-file ~/.ssh/id_rsa archivo.txt usuario@servidor:/ruta/
+copyway -p sftp --password mipassword archivo.txt usuario@servidor:/ruta/
+```
+
 ### Protocolo HDFS
 ```bash
 # Local → HDFS
@@ -68,6 +82,15 @@ copyway -p hdfs /hdfs/origen/archivo.txt /hdfs/destino/
 ### SSH
 ```bash
 copyway -p ssh --port 2222 --user admin --key-file ~/.ssh/id_rsa --compress archivo.txt servidor:/ruta/
+```
+
+### SFTP
+```bash
+# Con progress bar en tiempo real
+copyway -p sftp --port 2222 --user admin --key-file ~/.ssh/id_rsa archivo.txt servidor:/ruta/
+
+# Con password
+copyway -p sftp --password mipassword archivo.txt usuario@servidor:/ruta/
 ```
 
 ### HDFS
@@ -113,6 +136,10 @@ protocols:
     user: admin
     key_file: ~/.ssh/id_rsa
     compress: true
+  sftp:
+    port: 22
+    user: admin
+    key_file: ~/.ssh/id_rsa
   hdfs:
     replication: 3
     overwrite: false
@@ -220,6 +247,7 @@ Distribuido bajo la licencia MIT. Ver `LICENSE` para más información.
 
 - ✅ Protocolo Local: Completo
 - ✅ Protocolo SSH: Completo
+- ✅ Protocolo SFTP: Completo (con progress bar en tiempo real)
 - ✅ Protocolo HDFS: Completo (bidireccional)
 - 🚧 Protocolo S3: Planeado
 - 🚧 Protocolo FTP: Planeado
