@@ -1,7 +1,10 @@
 import subprocess
+import time
+from pathlib import Path
 from .base import Protocol
 from ..exceptions import ProtocolError
 from ..utils.logger import logger
+from ..utils.progress import get_file_size, format_size, format_speed
 
 
 class HDFSProtocol(Protocol):
@@ -13,9 +16,20 @@ class HDFSProtocol(Protocol):
 
     def copy(self, source, destination, **options):
         try:
+            show_progress = options.get("progress", True)
+            
             # Detectar dirección: si source empieza con / y no existe localmente, es HDFS
             is_hdfs_source = self._is_hdfs_path(source)
             is_hdfs_dest = self._is_hdfs_path(destination)
+            
+            # Obtener tamaño si es local
+            total_size = 0
+            if not is_hdfs_source and Path(source).exists():
+                total_size = get_file_size(source)
+            
+            if show_progress and total_size > 0:
+                print(f"Copiando {format_size(total_size)}...", flush=True)
+                start_time = time.time()
             
             if is_hdfs_source and not is_hdfs_dest:
                 # Descargar desde HDFS a local
@@ -25,6 +39,11 @@ class HDFSProtocol(Protocol):
                 self._upload_to_hdfs(source, destination, **options)
             else:
                 raise ProtocolError("Debe especificar una ruta HDFS y una local")
+            
+            if show_progress and total_size > 0:
+                elapsed = time.time() - start_time
+                speed = total_size / elapsed if elapsed > 0 else 0
+                print(f"✓ Completado: {format_size(total_size)} en {elapsed:.1f}s ({format_speed(speed)})")
             
             logger.info("Copia HDFS completada exitosamente")
             
