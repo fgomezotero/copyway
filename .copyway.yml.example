@@ -8,6 +8,12 @@ protocols:
     key_file: ~/.ssh/id_rsa
     compress: true
   
+  sftp:
+    port: 22
+    user: admin
+    key_file: ~/.ssh/id_rsa
+    # password: "mi_password"  # Alternativa a key_file
+  
   hdfs:
     replication: 3
     overwrite: false
