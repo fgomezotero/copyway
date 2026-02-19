@@ -5,6 +5,14 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.3.1] - 2026-02-19
+
+### Corregido
+- Bug en validación SFTP: ahora acepta credenciales (password/key_file) correctamente
+- Bug en upload SFTP: verifica si destino es directorio y copia archivo dentro
+- Validación SFTP ahora soporta formato `host:/ruta` con `--user` como fallback
+- Mejor manejo de errores cuando directorio remoto no existe
+
 ## [0.3.0] - 2024-01-20
 
 ### Agregado

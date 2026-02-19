@@ -13,13 +13,20 @@ except ImportError:
 
 
 class SFTPProtocol(Protocol):
-    def validate(self, source, destination):
+    def validate(self, source, destination, **options):
         if paramiko is None:
             raise ProtocolError("paramiko no instalado. Ejecutar: pip install paramiko")
         
-        from ..utils.validators import validate_source, validate_destination
+        from ..utils.validators import validate_source, validate_destination_sftp
         validate_source(source, "sftp")
-        validate_destination(destination, "sftp")
+        
+        # Pasar credenciales y usuario para validación SFTP
+        password = options.get("password", self.config.get("password"))
+        key_file = options.get("key_file", self.config.get("key_file"))
+        port = options.get("port", self.config.get("port", 22))
+        user = options.get("user", self.config.get("user"))
+        
+        validate_destination_sftp(destination, password, key_file, port, user)
         return True
 
     def copy(self, source, destination, **options):
@@ -45,12 +52,26 @@ class SFTPProtocol(Protocol):
             raise ProtocolError(f"Error en copia SFTP: {e}")
 
     def _upload(self, source, destination, port, user, password, key_file, show_progress):
-        host, remote_path = self._parse_remote(destination)
-        ssh = self._connect(host, port, user, password, key_file)
+        host, remote_path, remote_user = self._parse_remote(destination, user)
+        ssh = self._connect(host, port, remote_user, password, key_file)
         
         try:
             sftp = ssh.open_sftp()
             src_path = Path(source)
+            
+            # Verificar si remote_path es un directorio o archivo destino
+            try:
+                stat = sftp.stat(remote_path)
+                # Si existe y es directorio, copiar dentro
+                if self._is_dir_stat(stat):
+                    remote_path = f"{remote_path}/{src_path.name}"
+            except IOError:
+                # No existe, verificar si el directorio padre existe
+                parent_dir = "/".join(remote_path.rsplit("/", 1)[:-1]) or "/"
+                try:
+                    sftp.stat(parent_dir)
+                except IOError:
+                    raise ProtocolError(f"Directorio remoto no existe: {parent_dir}")
             
             if src_path.is_file():
                 total_size = src_path.stat().st_size
@@ -74,12 +95,15 @@ class SFTPProtocol(Protocol):
             
             sftp.close()
             logger.info("Copia SFTP completada exitosamente")
+        except IOError as e:
+            logger.error(f"Error SFTP: {e}")
+            raise ProtocolError(f"Error SFTP: {e}. Verifica que el directorio remoto existe y tienes permisos")
         finally:
             ssh.close()
 
     def _download(self, source, destination, port, user, password, key_file, show_progress):
-        host, remote_path = self._parse_remote(source)
-        ssh = self._connect(host, port, user, password, key_file)
+        host, remote_path, remote_user = self._parse_remote(source, user)
+        ssh = self._connect(host, port, remote_user, password, key_file)
         
         try:
             sftp = ssh.open_sftp()
@@ -153,13 +177,24 @@ class SFTPProtocol(Protocol):
         
         return ssh
 
-    def _parse_remote(self, path):
+    def _parse_remote(self, path, default_user=None):
         if "@" in path and ":" in path:
             user_host, remote_path = path.split(":", 1)
+            user = user_host.split("@")[0]
             host = user_host.split("@")[1]
-            return host, remote_path
-        raise ProtocolError(f"Formato inválido: {path}. Usar usuario@host:/ruta")
+            return host, remote_path, user
+        elif ":" in path:
+            # Formato host:/ruta, usar --user
+            host, remote_path = path.split(":", 1)
+            if not default_user:
+                raise ProtocolError(f"Debe especificar --user o usar formato usuario@host:/ruta")
+            return host, remote_path, default_user
+        raise ProtocolError(f"Formato inválido: {path}. Usar host:/ruta con --user o usuario@host:/ruta")
 
     def _is_dir(self, attr):
         import stat
         return stat.S_ISDIR(attr.st_mode)
+    
+    def _is_dir_stat(self, stat_result):
+        import stat
+        return stat.S_ISDIR(stat_result.st_mode)
