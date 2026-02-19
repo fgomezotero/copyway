@@ -22,6 +22,54 @@ def validate_source(source, protocol="local"):
     return True
 
 
+def validate_destination_sftp(destination, password=None, key_file=None, port=22, user=None):
+    """Validación específica para SFTP con credenciales"""
+    if "@" in destination and ":" in destination:
+        host_part = destination.split(":")[0]
+        try:
+            import paramiko
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            host = host_part.split("@")[1]
+            remote_user = host_part.split("@")[0]
+            
+            if key_file:
+                ssh.connect(host, port=port, username=remote_user, key_filename=key_file, timeout=15)
+            elif password:
+                ssh.connect(host, port=port, username=remote_user, password=password, timeout=15)
+            else:
+                ssh.connect(host, port=port, username=remote_user, timeout=15)
+            
+            ssh.close()
+        except ImportError:
+            raise ValidationError("paramiko no instalado. Ejecutar: pip install paramiko")
+        except Exception as e:
+            raise ValidationError(f"No se puede conectar a {host_part}: {e}")
+    elif ":" in destination:
+        # Formato host:/ruta con --user
+        if not user:
+            raise ValidationError("Debe especificar --user o usar formato usuario@host:/ruta")
+        host = destination.split(":")[0]
+        try:
+            import paramiko
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            
+            if key_file:
+                ssh.connect(host, port=port, username=user, key_filename=key_file, timeout=15)
+            elif password:
+                ssh.connect(host, port=port, username=user, password=password, timeout=15)
+            else:
+                ssh.connect(host, port=port, username=user, timeout=15)
+            
+            ssh.close()
+        except ImportError:
+            raise ValidationError("paramiko no instalado. Ejecutar: pip install paramiko")
+        except Exception as e:
+            raise ValidationError(f"No se puede conectar a {host}: {e}")
+    return True
+
+
 def validate_destination(destination, protocol="local"):
     if protocol == "local":
         dest = Path(destination)
@@ -82,7 +130,7 @@ def validate_destination(destination, protocol="local"):
                 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 host = host_part.split("@")[1]
                 user = host_part.split("@")[0]
-                ssh.connect(host, username=user, timeout=5)
+                ssh.connect(host, username=user, timeout=15)
                 ssh.close()
             except ImportError:
                 raise ValidationError("paramiko no instalado. Ejecutar: pip install paramiko")
