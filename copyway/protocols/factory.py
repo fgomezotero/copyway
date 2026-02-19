@@ -25,7 +25,9 @@ class ProtocolFactory:
 from .local import LocalProtocol
 from .ssh import SSHProtocol
 from .hdfs import HDFSProtocol
+from .sftp import SFTPProtocol
 
 ProtocolFactory.register("local", LocalProtocol)
 ProtocolFactory.register("ssh", SSHProtocol)
 ProtocolFactory.register("hdfs", HDFSProtocol)
+ProtocolFactory.register("sftp", SFTPProtocol)

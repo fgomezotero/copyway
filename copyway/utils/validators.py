@@ -8,7 +8,7 @@ def validate_source(source, protocol="local"):
     if protocol == "local":
         if not Path(source).exists():
             raise ValidationError(f"Source no existe: {source}")
-    elif protocol == "ssh":
+    elif protocol == "ssh" or protocol == "sftp":
         # Validar formato usuario@host:/ruta
         if "@" not in source and ":" not in source:
             # Es ruta local, validar que existe
@@ -72,6 +72,22 @@ def validate_destination(destination, protocol="local"):
                 raise ValidationError(f"Timeout conectando a {host_part}")
             except FileNotFoundError:
                 raise ValidationError("Comando 'ssh' no encontrado")
+    elif protocol == "sftp":
+        # Validar conectividad SFTP si es destino remoto
+        if "@" in destination and ":" in destination:
+            host_part = destination.split(":")[0]
+            try:
+                import paramiko
+                ssh = paramiko.SSHClient()
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                host = host_part.split("@")[1]
+                user = host_part.split("@")[0]
+                ssh.connect(host, username=user, timeout=5)
+                ssh.close()
+            except ImportError:
+                raise ValidationError("paramiko no instalado. Ejecutar: pip install paramiko")
+            except Exception as e:
+                raise ValidationError(f"No se puede conectar a {host_part}: {e}")
     elif protocol == "hdfs":
         # Validar que hdfs está disponible (pero permitir en pruebas sin Hadoop)
         try:
