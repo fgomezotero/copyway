@@ -1,3 +1,9 @@
+"""Utilidades para mostrar progreso de transferencias.
+
+Este módulo proporciona funciones y clases para formatear tamaños,
+velocidades y mostrar progreso de transferencias en tiempo real.
+"""
+
 import time
 import sys
 from pathlib import Path
@@ -5,7 +11,18 @@ from collections import deque
 
 
 def get_file_size(path):
-    """Obtener tamaño total de archivo o directorio"""
+    """Obtener tamaño total de archivo o directorio.
+    
+    Args:
+        path (str): Ruta al archivo o directorio
+    
+    Returns:
+        int: Tamaño total en bytes
+    
+    Example:
+        >>> size = get_file_size('/path/to/file.txt')
+        >>> print(f"Tamaño: {size} bytes")
+    """
     p = Path(path)
     if p.is_file():
         return p.stat().st_size
@@ -13,7 +30,20 @@ def get_file_size(path):
 
 
 def format_size(bytes_size):
-    """Formatear tamaño en bytes a formato legible"""
+    """Formatear tamaño en bytes a formato legible.
+    
+    Args:
+        bytes_size (int): Tamaño en bytes
+    
+    Returns:
+        str: Tamaño formateado (ej: "1.5 MB", "500 KB")
+    
+    Example:
+        >>> format_size(1536)
+        '1.5 KB'
+        >>> format_size(1048576)
+        '1.0 MB'
+    """
     for unit in ["B", "KB", "MB", "GB", "TB"]:
         if bytes_size < 1024.0:
             return f"{bytes_size:.1f} {unit}"
@@ -22,16 +52,50 @@ def format_size(bytes_size):
 
 
 def format_speed(bytes_per_sec):
-    """Formatear velocidad de transferencia"""
+    """Formatear velocidad de transferencia.
+    
+    Args:
+        bytes_per_sec (float): Bytes por segundo
+    
+    Returns:
+        str: Velocidad formateada (ej: "1.5 MB/s")
+    
+    Example:
+        >>> format_speed(1048576)
+        '1.0 MB/s'
+    """
     return f"{format_size(bytes_per_sec)}/s"
 
 
 class ProgressCallback:
-    """Callback estilo pip - muestra cada archivo en nueva línea"""
+    """Callback para mostrar progreso de transferencias.
+    
+    Muestra progreso estilo pip con spinner, porcentaje, tamaño y velocidad.
+    Cada archivo copiado se muestra en una nueva línea.
+    
+    Attributes:
+        total_size (int): Tamaño total a transferir en bytes
+        label (str): Etiqueta para mostrar
+        copied (int): Bytes copiados hasta ahora
+        start_time (float): Timestamp de inicio
+        SPINNER (list): Caracteres del spinner animado
+    
+    Example:
+        >>> progress = ProgressCallback(1048576, "Copiando")
+        >>> progress.update(524288, "file1.txt")
+        >>> progress.update(524288, "file2.txt")
+        >>> progress.finish()
+    """
     
     SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
     
     def __init__(self, total_size, label="Copiando"):
+        """Inicializa el callback de progreso.
+        
+        Args:
+            total_size (int): Tamaño total en bytes
+            label (str): Etiqueta a mostrar. Default: "Copiando"
+        """
         self.total_size = total_size
         self.label = label
         self.copied = 0
@@ -41,7 +105,12 @@ class ProgressCallback:
         self.last_file = None
     
     def update(self, bytes_copied, filename=None):
-        """Actualizar progreso"""
+        """Actualizar progreso de transferencia.
+        
+        Args:
+            bytes_copied (int): Bytes copiados en esta actualización
+            filename (str, optional): Nombre del archivo siendo copiado
+        """
         self.copied += bytes_copied
         current_time = time.time()
         
@@ -70,7 +139,10 @@ class ProgressCallback:
             sys.stdout.flush()
     
     def finish(self):
-        """Finalizar progreso"""
+        """Finalizar y mostrar resumen de transferencia.
+        
+        Muestra el tamaño total, tiempo transcurrido y velocidad promedio.
+        """
         elapsed = time.time() - self.start_time
         avg_speed = self.copied / elapsed if elapsed > 0 else 0
         msg = f"\r✓ {self.label} {format_size(self.copied)} en {elapsed:.1f}s ({format_speed(avg_speed)})\n"

@@ -1,3 +1,9 @@
+"""Interfaz de línea de comandos (CLI) para CopyWay.
+
+Este módulo implementa la interfaz CLI usando Click, manejando argumentos,
+opciones y orquestando la ejecución de protocolos de copia.
+"""
+
 import click
 import logging
 from pathlib import Path
@@ -26,7 +32,29 @@ from .utils.logger import logger, setup_logger
 @click.argument("source")
 @click.argument("destination")
 def main(protocol, source, destination, config, dry_run, verbose, progress, **options):
-    """Copiar archivos/directorios usando diferentes protocolos"""
+    """Copiar archivos/directorios usando diferentes protocolos.
+    
+    CopyWay soporta múltiples protocolos de transferencia con validación
+    completa y modo dry-run para simular operaciones.
+    
+    Args:
+        protocol (str): Protocolo a usar (local, ssh, sftp, hdfs)
+        source (str): Ruta de origen
+        destination (str): Ruta de destino
+        config (str): Ruta a archivo de configuración YAML
+        dry_run (bool): Si True, simula sin ejecutar
+        verbose (bool): Si True, activa logging detallado
+        progress (bool): Si True, muestra barra de progreso
+        **options: Opciones específicas del protocolo
+    
+    Examples:
+        $ copyway -p local /origen /destino
+        $ copyway -p sftp --password secret archivo.txt user@host:/ruta/
+        $ copyway -p ssh --dry-run archivo.txt user@host:/ruta/
+    
+    Raises:
+        click.Abort: Si ocurre algún error durante la ejecución
+    """
     
     if verbose:
         setup_logger(level=logging.DEBUG)
