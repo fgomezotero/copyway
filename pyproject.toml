@@ -4,10 +4,11 @@ description = "CLI para copiar archivos/directorios usando diferentes protocolos
 name = "copyway"
 packages = [{include = "copyway"}]
 readme = "README.md"
-version = "0.2.0"
+version = "0.3.0"
 
 [tool.poetry.dependencies]
 click = "^8.0.0"
+paramiko = "^3.0.0"
 python = "^3.10"
 pyyaml = "^6.0"
 
@@ -21,6 +22,7 @@ copyway = "copyway.cli:main"
 [tool.poetry.plugins."copyway.protocols"]
 hdfs = "copyway.protocols.hdfs:HDFSProtocol"
 local = "copyway.protocols.local:LocalProtocol"
+sftp = "copyway.protocols.sftp:SFTPProtocol"
 ssh = "copyway.protocols.ssh:SSHProtocol"
 
 [build-system]

@@ -5,6 +5,23 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.3.0] - 2024-01-20
+
+### Agregado
+- Protocolo SFTP con soporte completo para transferencias bidireccionales
+- Progress bar en tiempo real para transferencias SFTP con porcentaje, velocidad y bytes transferidos
+- Soporte para autenticación con password, key file o agente SSH
+- Manejo de directorios recursivos en SFTP
+- Validación de conectividad SFTP antes de transferencias
+- Dependencia paramiko para implementación nativa de SFTP en Python
+
+### Características SFTP
+- Upload y download de archivos y directorios
+- Progress bar visual con callback en tiempo real
+- Configuración de puerto, usuario, password y key_file
+- Mejor manejo de errores que SSH/SCP
+- Control programático completo de transferencias
+
 ## [0.1.0] - 2024-01-15
 
 ### Agregado
