@@ -30,15 +30,37 @@ pip install -e .
 
 ## 🎯 Inicio Rápido
 
+### Protocolo Local
 ```bash
-# Copia local
-copyway -p local /origen /destino
+# Local → Local (archivo)
+copyway -p local /origen/archivo.txt /destino/archivo.txt
 
-# Copia SSH
-copyway -p ssh archivo.txt usuario@servidor:/ruta/
+# Local → Local (directorio)
+copyway -p local /origen/carpeta /destino/carpeta
+```
 
-# Copia HDFS
-copyway -p hdfs /local/archivo.txt /hdfs/ruta/
+### Protocolo SSH
+```bash
+# Local → Remoto
+copyway -p ssh archivo.txt usuario@servidor:/ruta/destino/
+
+# Remoto → Local
+copyway -p ssh usuario@servidor:/ruta/archivo.txt /local/destino/
+
+# Remoto → Remoto (mismo servidor)
+copyway -p ssh usuario@servidor:/origen/archivo.txt usuario@servidor:/destino/
+```
+
+### Protocolo HDFS
+```bash
+# Local → HDFS
+copyway -p hdfs /local/archivo.txt /hdfs/ruta/destino/
+
+# HDFS → Local
+copyway -p hdfs /hdfs/ruta/archivo.txt /local/destino/
+
+# HDFS → HDFS
+copyway -p hdfs /hdfs/origen/archivo.txt /hdfs/destino/
 ```
 
 ## ⚙️ Opciones Avanzadas
