@@ -1,0 +1,10 @@
+[MESSAGES CONTROL]
+disable=unnecessary-pass,
+        no-value-for-parameter,
+        arguments-differ,
+        logging-fstring-interpolation,
+        raise-missing-from,
+        f-string-without-interpolation
+
+[FORMAT]
+max-line-length=120
