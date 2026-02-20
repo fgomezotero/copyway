@@ -51,10 +51,10 @@ class Config:
         if not path.exists():
             return {}
         try:
-            with open(path) as f:
+            with open(path, encoding="utf-8") as f:
                 return yaml.safe_load(f) or {}
         except Exception as e:
-            raise ConfigError(f"Error cargando configuración: {e}")
+            raise ConfigError(f"Error cargando configuración: {e}") from e
 
     def get(self, key, default=None):
         """Obtiene un valor de configuración.
