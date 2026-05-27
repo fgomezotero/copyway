@@ -5,6 +5,16 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.4.0] - 2026-05-27
+
+### Agregado
+- Opción `--skip-if-same` para SFTP que evita subir archivos cuando el remoto ya existe y es idéntico
+- Comparación de archivos remotos por `mtime` con tolerancia y `SHA-256` como verificación de contenido
+- Mensajes visibles al usuario cuando un archivo se omite por no tener cambios
+
+### Tests
+- Nuevas pruebas para cubrir omisión por igualdad remota, comparación por hash y comportamiento cuando `skip_if_same=False`
+
 ## [0.3.1] - 2026-02-19
 
 ### Corregido
