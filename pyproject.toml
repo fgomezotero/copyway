@@ -4,7 +4,7 @@ description = "CLI para copiar archivos/directorios usando diferentes protocolos
 name = "copyway"
 packages = [{include = "copyway"}]
 readme = "README.md"
-version = "0.3.1"
+version = "0.4.0"
 
 [tool.poetry.dependencies]
 click = "^8.0.0"
