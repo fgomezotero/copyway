@@ -56,6 +56,9 @@ copyway -p sftp --user admin --key-file ~/.ssh/id_rsa archivo.txt servidor:/ruta
 
 # Puerto personalizado
 copyway -p sftp --port 2222 --password secret archivo.txt usuario@servidor:/ruta/
+
+# Omitir archivos idénticos (mtime + hash SHA-256)
+copyway -p sftp --password secret --skip-if-same archivo.txt usuario@servidor:/ruta/
 ```
 
 ### Protocolo HDFS
@@ -84,6 +87,7 @@ copyway -p sftp --dry-run --password secret archivo.txt usuario@servidor:/ruta/
 - `--password`: Password para SFTP
 - `--key-file`: Archivo de clave privada
 - `--compress`: Comprimir transferencia (solo SSH)
+- `--skip-if-same`: (SFTP) Omitir la subida si el archivo remoto ya existe e **es idéntico** al local. La comparación usa `mtime` primero (tolerancia de ±1 s para diferencias de precisión entre filesystems); si difiere, se calcula el hash SHA-256 de ambos archivos para confirmarlo.
 
 ### HDFS
 - `--replication`: Factor de replicación
