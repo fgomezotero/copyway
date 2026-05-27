@@ -38,6 +38,12 @@ from .utils.logger import logger, setup_logger
 )
 @click.option("--follow-symlinks", is_flag=True, help="Seguir symlinks (local)")
 @click.option("--progress/--no-progress", default=True, help="Mostrar progreso")
+@click.option(
+    "--skip-if-same",
+    is_flag=True,
+    default=False,
+    help="SFTP: omitir archivo si ya existe en el destino con el mismo mtime/hash",
+)
 @click.argument("source")
 @click.argument("destination")
 def main(protocol, source, destination, config, dry_run, verbose, progress, **options):
